@@ -81,6 +81,7 @@ class RoutePayload
         });
     }
 
+    /* Idea borrowed from https://github.com/tightenco/ziggy/issues/107 */
     protected function nameKeyedRoutes()
     {
         $routes = collect();
