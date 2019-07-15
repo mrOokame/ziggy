@@ -83,24 +83,31 @@ class RoutePayload
 
     protected function nameKeyedRoutes()
     {
-        return collect($this->router->getRoutes()->getRoutesByName())
-            ->map(function ($route) {
-                if ($this->isListedAs($route, 'blacklist')) {
-                    $this->appendRouteToList($route->getName(), 'blacklist');
-                } elseif ($this->isListedAs($route, 'whitelist')) {
-                    $this->appendRouteToList($route->getName(), 'whitelist');
-                }
+        $routes = collect();
 
-                return collect($route)->only(['uri', 'methods'])
-                    ->put('domain', $route->domain())
-                    ->when($middleware = config('ziggy.middleware'), function ($collection) use ($middleware, $route) {
-                        if (is_array($middleware)) {
-                            return $collection->put('middleware', collect($route->middleware())->intersect($middleware)->values());
-                        }
+        $routes->merge(
+            collect($this->router->getRoutes()->getRoutesByName())
+                ->map(function ($route) {
+                    if ($this->isListedAs($route, 'blacklist')) {
+                        $this->appendRouteToList($route->getName(), 'blacklist');
+                    } elseif ($this->isListedAs($route, 'whitelist')) {
+                        $this->appendRouteToList($route->getName(), 'whitelist');
+                    }
 
-                        return $collection->put('middleware', $route->middleware());
-                    });
+                    return collect($route)->only(['uri', 'methods'])
+                        ->put('domain', $route->domain());
+            })
+        );
+
+        foreach($api->getRoutes() as $version => $router) {
+            collect($router->getRoutes())->each(function ($route) use($routes, $version) {
+                $routes->push(collect($route)->only(['uri', 'methods'])
+                             ->put('domain', $route->domain())
+                             ->put('version', $version));
             });
+        }
+
+        return $routes;
     }
 
     protected function appendRouteToList($name, $list)
