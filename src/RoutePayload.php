@@ -3,6 +3,8 @@
 namespace Tightenco\Ziggy;
 
 use Illuminate\Routing\Router;
+use Dingo\Api\Routing\Router as DingoRouter;
+
 
 class RoutePayload
 {
@@ -100,6 +102,7 @@ class RoutePayload
             })
         );
 
+	    $api = app('Dingo\Api\Routing\Router');
         foreach($api->getRoutes() as $version => $router) {
             collect($router->getRoutes())->each(function ($route) use($routes, $version) {
                 $routes->push(collect($route)->only(['uri', 'methods'])
